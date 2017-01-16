@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include "net.h"
 
-int HTTPFS_VERBOSE = 0;
+int HTTPFS_VERBOSE = 1;
 
 void httpfs_dump_raw_data( struct raw_data *raw_data )
 {

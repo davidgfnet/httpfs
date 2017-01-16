@@ -2,8 +2,8 @@ httpfs - Remote FUSE filesystem via server-side script
 ======================================================
 
 httpfs is a FUSE-based filesystem that uses HTTP messages to mount a remote
-directory on a local machine, relying on a generated server-side script
-(e.g. PHP) installed on the server.
+directory on a local machine in read-only mode, relying on an http server
+that is able to provide directory listing.
 
 Setup
 -----
@@ -27,20 +27,14 @@ Setup
 Sample usage
 ------------
 
- 1. Generate a PHP script:
+ 1. Run the http server in the desired folder:
 
-        httpfs generate php > httpfs.php
-
- 2. Place the generated script in an accessible location inside the document
-    root of your web server.
-
- 3. Mount the remote filesystem:
+ 2. Mount the remote filesystem:
 
         mkdir /tmp/httpfs/
-        httpfs mount http://target.com/httpfs.php /tmp/httpfs/ /home/john/
+        httpfs mount http://target.com/ /home/john/
 
- 4. Now the remote `/home/john/` is mounted in `/tmp/httpfs/`, head there to
-    browse the remote files.
+ 4. Now the remote `/home/john/` is mounted in the remote server root dir.
 
  5. Unmount the filesystem:
 
@@ -72,3 +66,6 @@ Authors
 Andrea Cardaci - http://cyrus-and.github.com
 
 Emilio Pinna - http://disse.cting.org
+
+David Guillen Fandos - https://davidgf.net
+

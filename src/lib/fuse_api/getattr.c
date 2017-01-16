@@ -1,50 +1,53 @@
 #include "httpfs.h"
 
+const char * directory_header = "X-Directory";
+
+#define FNV_PRIME_32 16777619
+#define FNV_OFFSET_32 2166136261U
+
+uint32_t FNV32(const char *s)
+{
+    uint32_t hash = FNV_OFFSET_32, i;
+    for(i = 0; i < strlen(s); i++)
+    {
+        hash = hash ^ (s[i]); // xor next byte into the bottom of the hash
+        hash = hash * FNV_PRIME_32; // Multiply by prime number found to work well
+    }
+    return hash;
+} 
+
 int httpfs_getattr( const char *path ,
                     struct stat *stbuf )
 {
-    HTTPFS_DO_SIMPLE_REQUEST( HTTPFS_OPCODE_getattr )
-    {
-        struct attrs
-        {
-            uint32_t dev;
-            uint32_t ino;
-            uint32_t mode;
-            uint32_t nlink;
-            uint32_t uid;
-            uint32_t gid;
-            uint32_t rdev;
-            uint32_t size;
-            uint32_t atime;
-            uint32_t mtime;
-            uint32_t ctime;
-            uint32_t blksize;
-            uint32_t blocks;
-        }
-        attrs;
-
+    HTTPFS_DO_REQUEST(0, path, 0, 0) {
         HTTPFS_CHECK_RESPONSE_STATUS;
-        if ( response.size != sizeof( struct attrs ) )
-        {
+
+        if (http_code == 404) {
             HTTPFS_CLEANUP;
-            HTTPFS_RETURN( EBADMSG );
+            HTTPFS_RETURN( ENOENT );
         }
+
+        LOGF("SIZE >>>>>> %d\n", response.hsize);
+        response.header[response.hsize] = 0;
+        unsigned isdir = strstr(response.header, directory_header) != 0;
+
+        const unsigned blksize = 32*1024;  // Arbitrary
+        unsigned filesize = content_length;
 
         memset( stbuf , 0 , sizeof( struct stat ) );
-        attrs = *( struct attrs * )response.payload;
-        stbuf->st_dev = ntohl( attrs.dev );
-        stbuf->st_ino = ntohl( attrs.ino );
-        stbuf->st_mode = ntohl( attrs.mode );
-        stbuf->st_nlink = ntohl( attrs.nlink );
-        stbuf->st_uid = ntohl( attrs.uid );
-        stbuf->st_gid = ntohl( attrs.gid );
-        stbuf->st_rdev = ntohl( attrs.rdev );
-        stbuf->st_size = ntohl( attrs.size );
-        stbuf->st_atime = ntohl( attrs.atime );
-        stbuf->st_mtime = ntohl( attrs.mtime );
-        stbuf->st_ctime = ntohl( attrs.ctime );
-        stbuf->st_blksize = ntohl( attrs.blksize );
-        stbuf->st_blocks = ntohl( attrs.blocks );
+        stbuf->st_dev = 1;
+        stbuf->st_ino = FNV32(path);
+        stbuf->st_mode = S_IRUSR | S_IRGRP | (isdir ? S_IFDIR : S_IFREG);
+        stbuf->st_nlink = 1;
+        stbuf->st_uid = getuid(); // Better cache this at mount time
+        stbuf->st_gid = getgid();
+        stbuf->st_rdev = 0;
+        stbuf->st_size = filesize;
+        stbuf->st_atime = 0;
+        stbuf->st_mtime = 0;
+        stbuf->st_ctime = 0;
+        stbuf->st_blksize = blksize;
+        stbuf->st_blocks = filesize / blksize;
 
         HTTPFS_CLEANUP;
         HTTPFS_RETURN( 0 );

@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include "generators.h"
 #include "httpfs.h"
 #include "fuse_api/fuse_api.h"
 #include "version.h"
@@ -10,9 +9,7 @@ static void usage()
              "Usage:\n\n"
              "    httpfs --help\n"
              "    httpfs --version\n"
-             "    httpfs generators\n"
-             "    httpfs generate <generator>\n"
-             "    httpfs mount <url> <mount_point> [<remote_chroot>]\n" );
+             "    httpfs mount <url> <mount_point>\n" );
 }
 
 static void info()
@@ -40,37 +37,17 @@ int main( int argc , char *argv[] )
     {
         usage();
     }
-    else if ( argc == 2 && strcmp( argv[ 1 ] , "generators" ) == 0 )
-    {
-        const struct httpfs_generator *generator;
-
-        for ( generator = HTTPFS_GENERATORS ; generator->name ; generator++ )
-        {
-            printf( "%s\n" , generator->name );
-        }
-    }
-    else if ( argc == 3 && strcmp( argv[ 1 ] , "generate" ) == 0 )
-    {
-        if ( !httpfs_generate( argv[ 2 ] ) )
-        {
-            usage();
-            return EXIT_FAILURE;
-        }
-    }
-    else if ( ( argc == 4 || argc == 5 ) &&
-              strcmp( argv[ 1 ] , "mount" ) == 0 )
+    else if ( argc == 4 && strcmp( argv[ 1 ] , "mount" ) == 0 )
     {
         struct httpfs httpfs;
         const char *url;
-        const char *remote_chroot;
         char *mount_point;
         int rv;
 
         url = argv[ 2 ];
-        remote_chroot = ( argc == 5 ? argv[ 4 ] : NULL );
         mount_point = argv[ 3 ];
 
-        rv = httpfs_fuse_start( &httpfs , url , remote_chroot , mount_point );
+        rv = httpfs_fuse_start( &httpfs , url , mount_point );
 
         if ( rv )
         {

@@ -6,18 +6,10 @@ int httpfs_read( const char *path ,
                  off_t offset ,
                  struct fuse_file_info *fi )
 {
-    struct
-    {
-        uint32_t size;
-        uint32_t offset;
-    }
-    header = { htonl( size ) ,
-               htonl( offset ) };
-
-    HTTPFS_DO_REQUEST_WITH_HEADER( HTTPFS_OPCODE_read )
+    HTTPFS_DO_REQUEST(1, path, offset, size )
     {
         HTTPFS_CHECK_RESPONSE_STATUS;
-        if ( response.size > size )
+        if ( response.size > size || http_code >= 400)
         {
             HTTPFS_CLEANUP;
             HTTPFS_RETURN( EBADMSG );

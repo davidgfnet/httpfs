@@ -27,6 +27,7 @@ include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 find_package( CURL )
 pkg_check_modules( FUSE REQUIRED fuse )
 add_definitions( ${FUSE_CFLAGS} -DFUSE_USE_VERSION=29 )
+#add_definitions( ${EXTRADBG_CFLAGS} -fsanitize=address )
 
 # httpfs library
 add_library( httpfs STATIC ${lib_src} ${fuse_api} ${templates_h} )
