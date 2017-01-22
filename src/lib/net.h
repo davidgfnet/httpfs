@@ -13,6 +13,6 @@ struct raw_data
     size_t hsize;
 };
 
-CURLcode httpfs_do_get(struct httpfs *httpfs, unsigned getbody, const char * path, unsigned offset, unsigned size, struct raw_data *out );
+CURLcode httpfs_do_get(CURL *curl, struct httpfs *httpfs, unsigned getbody, const char * path, unsigned offset, unsigned size, struct raw_data *out );
 
 #endif

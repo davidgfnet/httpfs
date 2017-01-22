@@ -28,13 +28,6 @@ int httpfs_fuse_start( struct httpfs *httpfs ,
 
     httpfs->url = url;
 
-    /* initialize curl */
-    httpfs->curl = curl_easy_init();
-    if ( !httpfs->curl )
-    {
-        return HTTPFS_CURL_ERROR;
-    }
-
     /* check remote availability before mounting */
     rv = -check_remote_availability( httpfs );
     switch ( rv )
@@ -52,7 +45,7 @@ int httpfs_fuse_start( struct httpfs *httpfs ,
     /* fuse arguments */
     argc = 0;
     argv[ argc++ ] = "httpfs";
-    argv[ argc++ ] = "-s"; /* single thread */
+    //argv[ argc++ ] = "-s"; /* single thread */
     if ( HTTPFS_VERBOSE ) argv[ argc++ ] = "-d"; /* debug and core dump */
     argv[ argc++ ] = mount_point;
 

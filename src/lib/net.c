@@ -26,9 +26,7 @@ static size_t retrieve_header(char *ptr, size_t size, size_t nmemb, void *userda
     return chunk_size;
 }
 
-CURLcode httpfs_do_get(struct httpfs *httpfs, unsigned getbody, const char * path, unsigned offset, unsigned size, struct raw_data *out) {
-    CURL *curl = httpfs->curl;
-
+CURLcode httpfs_do_get(CURL *curl, struct httpfs *httpfs, unsigned getbody, const char * path, unsigned offset, unsigned size, struct raw_data *out) {
     out->payload = malloc( 1 );
     out->header = malloc( 1 );
     out->size = out->hsize = 0;

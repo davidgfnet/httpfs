@@ -22,6 +22,7 @@
 
 /* common */
 #define _HTTPFS_DO_REQUEST(doget, path, offset, size , httpfs ) \
+    CURL *curl = curl_easy_init(); \
     LOGF( "REQUEST: %s ", path ); \
     struct raw_data _out = { 0 } , _header_data = { 0 }; \
     struct raw_data response = { 0 }; \
@@ -31,7 +32,7 @@
     ( void )_header_data; \
     ( void ) content_length; \
     ( void ) http_code; \
-    if ( CURLE_OK != httpfs_do_get( httpfs, doget, path, offset, size, &_out ) ) { \
+    if ( CURLE_OK != httpfs_do_get( curl, httpfs, doget, path, offset, size, &_out ) ) { \
         LOG( "REQUEST: failed" ); \
         HTTPFS_CLEANUP; \
         return -ECOMM; \
@@ -61,9 +62,9 @@
     response.header = _out.header; \
     response.hsize = _out.hsize; \
     double tmp; \
-    if (CURLE_OK == curl_easy_getinfo(((struct httpfs *)fuse_get_context()->private_data)->curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &tmp)) \
+    if (CURLE_OK == curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &tmp)) \
         content_length = tmp; \
-    curl_easy_getinfo (((struct httpfs *)fuse_get_context()->private_data)->curl, CURLINFO_RESPONSE_CODE, &http_code);
+    curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
 
 #define _HTTPFS_CHECK_HANDLE_ERROR( status , errno ) \
     case HTTPFS_STATUS_##status: \
@@ -72,7 +73,8 @@
 
 /* to be called before return in FUSE API functions */
 #define HTTPFS_CLEANUP \
-    free( _out.payload )
+    free( _out.payload ); \
+    curl_easy_cleanup(curl);
 
 /* initialization errors */
 enum
@@ -90,7 +92,6 @@ struct httpfs
 {
     const char *url;
     const char *remote_chroot;
-    CURL *curl;
 };
 
 /* response status */
