@@ -6,7 +6,7 @@ static size_t retrieve_chunk(char *ptr, size_t size, size_t nmemb, void *userdat
     struct raw_data *data = ( struct raw_data * )userdata;
     size_t chunk_size = size * nmemb;
 
-    data->payload = realloc(data->payload , data->size + chunk_size + 1);
+    data->payload = (char*)realloc(data->payload , data->size + chunk_size + 1);
     memcpy(data->payload + data->size , ptr , chunk_size);
     data->size += chunk_size;
 
@@ -19,7 +19,7 @@ static size_t retrieve_header(char *ptr, size_t size, size_t nmemb, void *userda
 
     chunk_size = size * nmemb;
     data = ( struct raw_data * )userdata;
-    data->header = realloc(data->header, data->hsize + chunk_size + 1);
+    data->header = (char*)realloc(data->header, data->hsize + chunk_size + 1);
     memcpy(data->header + data->hsize, ptr, chunk_size);
     data->hsize += chunk_size;
 
@@ -27,8 +27,8 @@ static size_t retrieve_header(char *ptr, size_t size, size_t nmemb, void *userda
 }
 
 CURLcode httpfs_do_get(CURL *curl, struct httpfs *httpfs, unsigned getbody, const char * path, unsigned offset, unsigned size, struct raw_data *out) {
-    out->payload = malloc( 1 );
-    out->header = malloc( 1 );
+    out->payload = (char*)malloc(1);
+    out->header = (char*)malloc(1);
     out->size = out->hsize = 0;
 
     char range[128];

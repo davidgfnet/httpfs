@@ -6,7 +6,7 @@ unsigned strip_html(char * p, unsigned size) {
         if (p[i] == '<') {
             unsigned start = i;
             while (i < size && p[i] != '>') { i++; }
-			unsigned end = ++i;
+            unsigned end = ++i;
 
             memmove(&p[start], &p[end], size - end);
             size -= (end-start);
@@ -25,7 +25,6 @@ int httpfs_readdir( const char *path ,
                     off_t offset ,
                     struct fuse_file_info *fi )
 {
-    //HTTPFS_DO_REQUEST(1, path, offset, /*size*/ 0 )
      HTTPFS_DO_REQUEST(1, path, 0, 0) {
         HTTPFS_CHECK_RESPONSE_STATUS;
         if (http_code >= 400) {
@@ -56,11 +55,11 @@ int httpfs_readdir( const char *path ,
                 fst.st_ino = 0;
                 fst.st_mode = S_IRUSR | S_IRGRP | (isdir ? S_IFDIR : S_IFREG);
 
-                filler( buf , fn , &fst , 0 );
+                filler(buf, fn, &fst, 0);
             }
         }
 
         HTTPFS_CLEANUP;
-        HTTPFS_RETURN( 0 );
+        HTTPFS_RETURN(0);
     }
 }

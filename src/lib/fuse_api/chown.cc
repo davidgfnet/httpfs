@@ -5,5 +5,5 @@ int httpfs_chown( const char *path ,
                   gid_t gid )
 {
     // Read only FS!
-    HTTPFS_RETURN( EACCES );
+    HTTPFS_RETURN(EACCES);
 }
