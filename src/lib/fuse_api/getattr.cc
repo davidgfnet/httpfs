@@ -21,7 +21,7 @@ int httpfs_getattr(const char *path, struct stat *stbuf) {
     if (ctx->enable_caching) {
         // Read lock and lookup
         std::shared_lock<std::shared_mutex> lock(ctx->cache_metadata_mutex);
-        if (ctx->cache_metadata.lookup(path, *stbuf))
+        if (ctx->cache_metadata.tryGet(path, *stbuf))
             return 0;
     }
 
@@ -58,7 +58,7 @@ int httpfs_getattr(const char *path, struct stat *stbuf) {
         if (ctx->enable_caching) {
             // Write lock + write
             std::unique_lock<std::shared_mutex> lock(ctx->cache_metadata_mutex);
-            ctx->cache_metadata.add(path, *stbuf);
+            ctx->cache_metadata.insert(path, *stbuf);
         }
 
         HTTPFS_CLEANUP;

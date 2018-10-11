@@ -12,6 +12,7 @@
 #include <shared_mutex>
 #include "debug.h"
 #include "net.h"
+#include "lrucache.h"
 
 /* convenience macros used to implement the FUSE API functions; 'response' is
    the data received and it's available to the implementation; a structure named
@@ -89,79 +90,14 @@ enum {
     HTTPFS_ERRNO_ERROR
 };
 
-
-template <typename K, typename V>
-class lru_cache {
-private:
-    typedef std::pair<K, V> cache_entry;
-    typedef std::list<cache_entry> cache_list;
-    typedef std::unordered_map<K, typename cache_list::iterator> cache_map;
-    
-public:
-    typedef typename cache_list::iterator iterator;
-    typedef typename cache_list::const_iterator const_iterator;
-    
-    lru_cache(size_t size) : size_(size) {
-        cache_map_.reserve(size_);
-    }
-
-    bool lookup(const K& key, V& value) {
-        auto map_it = cache_map_.find(key);
-        if (map_it != cache_map_.end()) {
-            // Copy entry from list
-            auto& list_it = map_it->second;
-            cache_entry entry = *list_it;
-            value = entry.second;
-            
-            // Remove entry from list
-            cache_list_.erase(list_it);
-            
-            // Update entry and add to beginning of the list
-            cache_list_.push_front(entry);
-
-            // Return value and found
-            return true;
-        }
-        return false;
-    }
-    
-    void add(const K& key, const V& value) {
-        if (cache_map_.size() >= size_)
-            remove_eldest();
-        
-        auto map_it = cache_map_.find(key);
-        if (map_it == cache_map_.end()) {
-            // Add element to list and save iterator on map
-            auto list_it = cache_list_.insert(cache_list_.begin(), std::make_pair(key, value));
-            cache_map_.emplace(key, list_it);
-        }
-    }
-
-    void remove_eldest() {
-        if (!cache_map_.empty()) {
-            cache_entry entry = cache_list_.back();
-            cache_map_.erase(entry.first);
-            cache_list_.pop_back();
-        }
-    }
-    
-    size_t size() const { return cache_map_.size(); }
-    bool empty() const { return cache_map_.empty(); }
-    
-private:
-    size_t size_;
-    cache_map cache_map_;
-    cache_list cache_list_;
-};
-
 /* context */
 class httpfs {
 public:
     httpfs(int cache_size)
       // Use 25% of cache size for metadata
      : enable_caching(cache_size > 0),
-       cache_metadata(cache_size / 4 / (sizeof(struct stat) + 64)) {
-
+       cache_metadata(0.9f * cache_size / 4 / (sizeof(struct stat) + 64),
+                             cache_size / 4 / (sizeof(struct stat) + 64)) {
     }
 
     const char *url;
@@ -169,7 +105,7 @@ public:
 
     // Caching structures
     bool enable_caching;
-    lru_cache<std::string, struct stat> cache_metadata;
+    lru11::Cache<std::string, struct stat> cache_metadata;
     std::shared_mutex cache_metadata_mutex;
 };
 
