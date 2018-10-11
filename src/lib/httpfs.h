@@ -159,7 +159,8 @@ class httpfs {
 public:
     httpfs(int cache_size)
       // Use 25% of cache size for metadata
-     : cache_metadata(cache_size > 0 ? cache_size / 4 / (sizeof(struct stat) + 64) : 0) {
+     : enable_caching(cache_size > 0),
+       cache_metadata(cache_size / 4 / (sizeof(struct stat) + 64)) {
 
     }
 
@@ -168,7 +169,6 @@ public:
 
     // Caching structures
     bool enable_caching;
-    unsigned max_cache_metadata, max_cache_dirs, max_cache_data;
     lru_cache<std::string, struct stat> cache_metadata;
     std::shared_mutex cache_metadata_mutex;
 };
